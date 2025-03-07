@@ -50,19 +50,32 @@ class SFGCalculator(QMainWindow):
         theta1_rad = math.radians(theta1)
         theta2_rad = math.radians(theta2)
         
+        cos_theta1 = math.cos(theta1_rad)
+        cos_theta2 = math.cos(theta2_rad)
+        
         if polarization == 'xx':
-            # Lxx = (2 * n1 * cosθ2) / (n2 * cosθ1 + n1 * cosθ2)
-            numerator = 2 * n1 * math.cos(theta2_rad)
-            denominator = n2 * math.cos(theta1_rad) + n1 * math.cos(theta2_rad)
+            # Lxx = (2 * cosθ2) / (cosθ2 + n2 * cosθ1)
+            numerator = 2 * cos_theta2
+            denominator = cos_theta2 + n2 * cos_theta1
             return numerator / denominator
         elif polarization == 'yy':
-            # Lyy = (2 * n1 * cosθ1) / (n1 * cosθ2 + n2 * cosθ1)
-            numerator = 2 * n1 * math.cos(theta1_rad)
-            denominator = n1 * math.cos(theta2_rad) + n2 * math.cos(theta1_rad)
+            # Lyy = (2 * cosθ1) / (cosθ1 + n2 * cosθ2)
+            numerator = 2 * cos_theta1
+            denominator = cos_theta1 + n2 * cos_theta2
             return numerator / denominator
         else:
             return 0.0
         
+    def calculate_quartz_refractive_index(self, wavelength):
+        """根据波长计算石英折射率"""
+        # 将波长转换为微米
+        wavelength_um = wavelength / 1000
+        # 使用给定的Sellmeier方程计算折射率
+        n_squared = 1.28604141 + \
+                    1.07044083 * wavelength_um**2 / (wavelength_um**2 - 0.0100585997) + \
+                    1.10202242 * wavelength_um**2 / (wavelength_um**2 - 100)
+        return math.sqrt(n_squared)
+
     def update_sfg_results(self):
         """当输入值变化时更新计算结果"""
         try:
@@ -77,18 +90,30 @@ class SFGCalculator(QMainWindow):
                 raise ValueError("入射角度必须在0到90度之间")
                 
             # 计算SFG波长
-            sfg_wavelength = 1e7 / (1e7/vis_wavelength - ir_wavenumber)
+            ir_wavelength = 1e7 / ir_wavenumber
+            sfg_wavelength = 1/(1/vis_wavelength + 1/ir_wavelength)
             
             # 计算SFG反射角度（使用更精确的公式）
             n_air = 1.0  # 空气折射率
-            n_quartz = 1.55  # 石英折射率（近似值）
+            # 计算各波长对应的石英折射率
+            n_quartz_vis = self.calculate_quartz_refractive_index(vis_wavelength)
+            n_quartz_ir = self.calculate_quartz_refractive_index(1e7 / ir_wavenumber)
+            n_quartz_sfg = self.calculate_quartz_refractive_index(sfg_wavelength)
             
             # 计算可见光和红外光的折射角度
-            vis_ref_angle = self.calculate_refraction_angle(vis_angle, n_air, n_quartz)
-            ir_ref_angle = self.calculate_refraction_angle(ir_angle, n_air, n_quartz)
+            vis_ref_angle = self.calculate_refraction_angle(vis_angle, n_air, n_quartz_vis)
+            ir_ref_angle = self.calculate_refraction_angle(ir_angle, n_air, n_quartz_ir)
             
             # 计算SFG反射角度
-            sfg_angle = (vis_ref_angle + ir_ref_angle) / 2
+            vis_angle_rad = math.radians(vis_angle)
+            ir_angle_rad = math.radians(ir_angle)
+            sfg_angle = math.degrees(math.asin(
+                sfg_wavelength * (math.sin(vis_angle_rad)/vis_wavelength + 
+                                math.sin(ir_angle_rad)/ir_wavelength)
+            ))
+            
+            # 计算SFG折射角度
+            sfg_ref_angle = self.calculate_refraction_angle(sfg_angle, n_air, n_quartz_sfg)
             
             # 更新输出框
             self.sfg_wavelength_output.setText(f"{sfg_wavelength:.2f} nm")
@@ -99,31 +124,71 @@ class SFGCalculator(QMainWindow):
             self.ir_wavelength_output.setText(f"{ir_wavelength:.2f} nm")
             
             # 更新折射率和折射角度
-            self.vis_refractive_index_output.setText(f"{n_quartz:.3f}")
-            self.ir_refractive_index_output.setText(f"{n_quartz:.3f}")
-            self.sfg_refractive_index_output.setText(f"{n_quartz:.3f}")
+            self.vis_refractive_index_output.setText(f"{n_quartz_vis:.3f}")
+            self.ir_refractive_index_output.setText(f"{n_quartz_ir:.3f}")
+            self.sfg_refractive_index_output.setText(f"{n_quartz_sfg:.3f}")
             
             self.vis_refraction_angle_output.setText(f"{vis_ref_angle:.2f} °")
             self.ir_refraction_angle_output.setText(f"{ir_ref_angle:.2f} °")
-            self.sfg_refraction_angle_output.setText(f"{sfg_angle:.2f} °")
+            self.sfg_refraction_angle_output.setText(f"{sfg_ref_angle:.2f} °")
             
             # 计算并更新相干长度
-            delta_n = abs(n_quartz - n_air)
-            coherence_length = (sfg_wavelength * 1e-3) / (2 * delta_n)  # 转换为μm
+            sfg_angle_rad = math.radians(sfg_angle)
+            vis_angle_rad = math.radians(vis_angle)
+            ir_angle_rad = math.radians(ir_angle)
+            
+            sfg_term = math.sqrt(n_quartz_sfg**2 - math.sin(sfg_angle_rad)**2) / sfg_wavelength
+            vis_term = math.sqrt(n_quartz_vis**2 - math.sin(vis_angle_rad)**2) / vis_wavelength
+            ir_term = math.sqrt(n_quartz_ir**2 - math.sin(ir_angle_rad)**2) / ir_wavelength
+            
+            coherence_length = 1 / ((2 * math.pi * (sfg_term + vis_term) + ir_term))  # 单位为nm
             self.coherence_length_output.setText(f"{coherence_length:.2f}")
             
             # 计算并更新菲涅耳因子
             # SFG
-            self.fresnel_xx_sfg.setText(f"{self.calculate_fresnel(n_air, n_quartz, sfg_angle, sfg_angle, 'xx'):.3f}")
-            self.fresnel_yy_sfg.setText(f"{self.calculate_fresnel(n_air, n_quartz, sfg_angle, sfg_angle, 'yy'):.3f}")
+            lxx_sfg = self.calculate_fresnel(n_air, n_quartz_sfg, sfg_angle, sfg_ref_angle, 'xx')
+            lyy_sfg = self.calculate_fresnel(n_air, n_quartz_sfg, sfg_angle, sfg_ref_angle, 'yy')
+            self.fresnel_xx_sfg.setText(f"{lxx_sfg:.3f}")
+            self.fresnel_yy_sfg.setText(f"{lyy_sfg:.3f}")
             
             # VIS
-            self.fresnel_xx_vis.setText(f"{self.calculate_fresnel(n_air, n_quartz, vis_angle, vis_ref_angle, 'xx'):.3f}")
-            self.fresnel_yy_vis.setText(f"{self.calculate_fresnel(n_air, n_quartz, vis_angle, vis_ref_angle, 'yy'):.3f}")
+            lxx_vis = self.calculate_fresnel(n_air, n_quartz_vis, vis_angle, vis_ref_angle, 'xx')
+            lyy_vis = self.calculate_fresnel(n_air, n_quartz_vis, vis_angle, vis_ref_angle, 'yy')
+            self.fresnel_xx_vis.setText(f"{lxx_vis:.3f}")
+            self.fresnel_yy_vis.setText(f"{lyy_vis:.3f}")
             
             # IR
-            self.fresnel_xx_ir.setText(f"{self.calculate_fresnel(n_air, n_quartz, ir_angle, ir_ref_angle, 'xx'):.3f}")
-            self.fresnel_yy_ir.setText(f"{self.calculate_fresnel(n_air, n_quartz, ir_angle, ir_ref_angle, 'yy'):.3f}")
+            lxx_ir = self.calculate_fresnel(n_air, n_quartz_ir, ir_angle, ir_ref_angle, 'xx')
+            lyy_ir = self.calculate_fresnel(n_air, n_quartz_ir, ir_angle, ir_ref_angle, 'yy')
+            self.fresnel_xx_ir.setText(f"{lxx_ir:.3f}")
+            self.fresnel_yy_ir.setText(f"{lyy_ir:.3f}")
+
+            # 计算二阶极化率
+            # 将角度转换为弧度
+            sfg_angle_rad = math.radians(sfg_angle)
+            vis_angle_rad = math.radians(vis_angle)
+            ir_angle_rad = math.radians(ir_angle)
+
+            # SSP
+            chi2_ssp = math.cos(ir_angle_rad) * lyy_sfg * lyy_vis * lxx_ir * coherence_length * 1e-9 * 1.6e-12
+            self.chi2_ssp_output.setText(f"{chi2_ssp:.3e}")
+            self.chi2_ssp_sq_output.setText(f"{abs(chi2_ssp)**2:.3e}")
+
+            # PPP
+            chi2_ppp = math.cos(sfg_angle_rad) * math.cos(vis_angle_rad) * math.cos(ir_angle_rad) * \
+                      lxx_sfg * lxx_vis * lxx_ir * coherence_length * 1.6e-21
+            self.chi2_ppp_output.setText(f"{chi2_ppp:.3e}")
+            self.chi2_ppp_sq_output.setText(f"{abs(chi2_ppp)**2:.3e}")
+
+            # SPS
+            chi2_sps = math.cos(vis_angle_rad) * lyy_sfg * lxx_vis * lyy_ir * coherence_length * 1.6e-21
+            self.chi2_sps_output.setText(f"{chi2_sps:.3e}")
+            self.chi2_sps_sq_output.setText(f"{abs(chi2_sps)**2:.3e}")
+
+            # PSS
+            chi2_pss = math.cos(ir_angle_rad) * lxx_sfg * lyy_vis * lyy_ir * coherence_length * 1.6e-21
+            self.chi2_pss_output.setText(f"{chi2_pss:.3e}")
+            self.chi2_pss_sq_output.setText(f"{abs(chi2_pss)**2:.3e}")
             
         except ValueError:
             # 输入无效时清空输出
@@ -484,7 +549,7 @@ class SFGCalculator(QMainWindow):
         # 第三部分输出:相干长度
         output3_group = QWidget()
         output3_layout = QGridLayout()
-        output3_layout.addWidget(QLabel("相干长度 (μm):"), 0, 0)
+        output3_layout.addWidget(QLabel("相干长度 (nm):"), 0, 0)
         self.coherence_length_output = QLineEdit()
         self.coherence_length_output.setReadOnly(True)
         output3_layout.addWidget(self.coherence_length_output, 0, 1)
