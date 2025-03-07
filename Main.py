@@ -31,6 +31,9 @@ class SFGCalculator(QMainWindow):
         self.setup_focus_tab()
         self.setup_intensity_tab()
         
+        # Initialize with default values
+        self.update_sfg_results()
+        
     def calculate_sfg_angle(self):
         """计算SFG反射角度"""
         # TODO: 实现具体计算逻辑
@@ -141,7 +144,7 @@ class SFGCalculator(QMainWindow):
             vis_term = math.sqrt(n_quartz_vis**2 - math.sin(vis_angle_rad)**2) / vis_wavelength
             ir_term = math.sqrt(n_quartz_ir**2 - math.sin(ir_angle_rad)**2) / ir_wavelength
             
-            coherence_length = 1 / ((2 * math.pi * (sfg_term + vis_term) + ir_term))  # 单位为nm
+            coherence_length = 1 /((2 * math.pi * (sfg_term + vis_term) + ir_term))  # 单位为nm
             self.coherence_length_output.setText(f"{coherence_length:.2f}")
             
             # 计算并更新菲涅耳因子
