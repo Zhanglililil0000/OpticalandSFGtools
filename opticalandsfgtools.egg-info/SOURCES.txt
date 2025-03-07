@@ -1,0 +1,6 @@
+README.md
+setup.py
+opticalandsfgtools.egg-info/PKG-INFO
+opticalandsfgtools.egg-info/SOURCES.txt
+opticalandsfgtools.egg-info/dependency_links.txt
+opticalandsfgtools.egg-info/top_level.txt
