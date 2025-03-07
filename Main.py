@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget, 
-                            QVBoxLayout, QGridLayout, QLabel, QLineEdit)
+                            QVBoxLayout, QGridLayout, QLabel, QLineEdit, QFrame)
 import pyqtgraph as pg
 
 class SFGCalculator(QMainWindow):
@@ -56,7 +56,23 @@ class SFGCalculator(QMainWindow):
         input_layout.addWidget(self.ir_wavenumber_input, 1, 3)
         
         input_group.setLayout(input_layout)
+        
+        # 添加输入标题
+        input_title = QLabel("输入参数")
+        input_title.setStyleSheet("font-weight: bold; font-size: 14px;")
+        main_layout.addWidget(input_title)
         main_layout.addWidget(input_group)
+        
+        # 添加分割线
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.HLine)
+        separator.setFrameShadow(QFrame.Shadow.Sunken)
+        main_layout.addWidget(separator)
+        
+        # 添加输出标题
+        output_title = QLabel("输出结果") 
+        output_title.setStyleSheet("font-weight: bold; font-size: 14px;")
+        main_layout.addWidget(output_title)
         
         # 创建输出区域
         output_group = QWidget()
@@ -224,6 +240,10 @@ class SFGCalculator(QMainWindow):
 
         output_group.setLayout(output_layout)
         main_layout.addWidget(output_group)
+        
+        # 调整布局间距
+        main_layout.setSpacing(15)
+        main_layout.setContentsMargins(15, 15, 15, 15)
         
         self.quartz_tab.setLayout(main_layout)
         
