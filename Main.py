@@ -235,17 +235,71 @@ class SFGCalculator(QMainWindow):
         input_layout = QGridLayout()
         
         # 添加输入控件
-        input_layout.addWidget(QLabel("激光波长 (nm):"), 0, 0)
-        self.laser_wavelength_input = QLineEdit()
-        self.laser_wavelength_input.setText("532")
-        self.laser_wavelength_input.textChanged.connect(self.calculate_focus)
-        input_layout.addWidget(self.laser_wavelength_input, 0, 1)
-        
-        input_layout.addWidget(QLabel("透镜焦距 (mm):"), 1, 0)
-        self.lens_focal_input = QLineEdit()
-        self.lens_focal_input.setText("100")
-        self.lens_focal_input.textChanged.connect(self.calculate_focus)
-        input_layout.addWidget(self.lens_focal_input, 1, 1)
+        input_layout.addWidget(QLabel("可见波长 (nm):"), 0, 0)
+        self.Visible_wavelength_input = QLineEdit()
+        self.Visible_wavelength_input.setText("532")
+        self.Visible_wavelength_input.textChanged.connect(self.calculate_focus)
+        input_layout.addWidget(self.Visible_wavelength_input, 0, 1)
+
+        input_layout.addWidget(QLabel("红外波长 (nm):"), 0, 2)
+        self.IR_wavelength_input = QLineEdit()
+        self.IR_wavelength_input.setText("3300")
+        self.IR_wavelength_input.textChanged.connect(self.calculate_focus)
+        input_layout.addWidget(self.IR_wavelength_input, 0, 3)
+
+        input_layout.addWidget(QLabel("SFG波长 (nm):"), 0, 4)
+        self.SFG_wavelength_input = QLineEdit()
+        self.SFG_wavelength_input.setText("458")
+        self.SFG_wavelength_input.textChanged.connect(self.calculate_focus)
+        input_layout.addWidget(self.SFG_wavelength_input, 0, 5)
+
+        input_layout.addWidget(QLabel("可见光斑直径 (mm):"), 1, 0)
+        self.visible_size_input = QLineEdit()
+        self.visible_size_input.setText("5")
+        self.visible_size_input.textChanged.connect(self.calculate_focus)
+        input_layout.addWidget(self.visible_size_input, 1, 1)
+
+        input_layout.addWidget(QLabel("红外光斑直径 (mm):"), 1, 2)
+        self.IR_size_input = QLineEdit()
+        self.IR_size_input.setText("5")
+        self.IR_size_input.textChanged.connect(self.calculate_focus)
+        input_layout.addWidget(self.IR_size_input, 1, 3)
+
+        input_layout.addWidget(QLabel("可见透镜焦距 (mm):"), 2, 0)
+        self.Visible_focal_input = QLineEdit()
+        self.Visible_focal_input.setText("250")
+        self.Visible_focal_input.textChanged.connect(self.calculate_focus)
+        input_layout.addWidget(self.Visible_focal_input, 2, 1)
+
+        input_layout.addWidget(QLabel("红外透镜焦距 (mm):"), 2, 2)
+        self.IR_focal_input = QLineEdit()
+        self.IR_focal_input.setText("150")
+        self.IR_focal_input.textChanged.connect(self.calculate_focus)
+        input_layout.addWidget(self.IR_focal_input, 2, 3)
+
+        input_layout.addWidget(QLabel("SFG透镜焦距 (mm):"), 2, 4)
+        self.SFG_focal_input = QLineEdit()
+        self.SFG_focal_input.setText("200")
+        self.SFG_focal_input.textChanged.connect(self.calculate_focus)
+        input_layout.addWidget(self.SFG_focal_input, 2, 5)
+
+        input_layout.addWidget(QLabel("可见焦点距离 (mm):"), 3, 0)
+        self.Visible_defocus_input = QLineEdit()
+        self.Visible_defocus_input.setText("15")
+        self.Visible_defocus_input.textChanged.connect(self.calculate_focus)
+        input_layout.addWidget(self.Visible_defocus_input, 3, 1)
+
+        input_layout.addWidget(QLabel("红外焦点距离 (mm):"), 3, 2)
+        self.IR_defocus_input = QLineEdit()
+        self.IR_defocus_input.setText("15")
+        self.IR_defocus_input.textChanged.connect(self.calculate_focus)
+        input_layout.addWidget(self.IR_defocus_input, 3, 3)
+
+        input_layout.addWidget(QLabel("光谱仪透镜焦距 (mm):"), 4, 0)
+        self.Spectrometer_focal_input = QLineEdit()
+        self.Spectrometer_focal_input.setText("100")
+        self.Spectrometer_focal_input.textChanged.connect(self.calculate_focus)
+        input_layout.addWidget(self.Spectrometer_focal_input, 4, 1)
         
         input_group.setLayout(input_layout)
         
@@ -277,15 +331,45 @@ class SFGCalculator(QMainWindow):
         output_layout = QGridLayout()
         
         # 添加输出控件
-        output_layout.addWidget(QLabel("光束直径 (mm):"), 0, 0)
-        self.beam_diameter_output = QLineEdit()
-        self.beam_diameter_output.setReadOnly(True)
-        output_layout.addWidget(self.beam_diameter_output, 0, 1)
-        
-        output_layout.addWidget(QLabel("瑞利长度 (mm):"), 1, 0)
-        self.rayleigh_length_output = QLineEdit()
-        self.rayleigh_length_output.setReadOnly(True)
-        output_layout.addWidget(self.rayleigh_length_output, 1, 1)
+        output_layout.addWidget(QLabel("可见焦点直径 (mm):"), 0, 0)
+        self.Visible_spot_output = QLineEdit()
+        self.Visible_spot_output.setReadOnly(True)
+        output_layout.addWidget(self.Visible_spot_output, 0, 1)
+
+        output_layout.addWidget(QLabel("可见焦点深度 (mm):"), 0, 2)
+        self.Visible_depth_output = QLineEdit()
+        self.Visible_depth_output.setReadOnly(True)
+        output_layout.addWidget(self.Visible_depth_output, 0, 3) 
+
+        output_layout.addWidget(QLabel("可见光斑直径 (mm):"), 0, 4)
+        self.Visible_diameter_output = QLineEdit()
+        self.Visible_diameter_output.setReadOnly(True)
+        output_layout.addWidget(self.Visible_diameter_output, 0, 5)
+
+        output_layout.addWidget(QLabel("红外焦点直径 (mm):"), 1, 0)
+        self.IR_spot_output = QLineEdit()
+        self.IR_spot_output.setReadOnly(True)
+        output_layout.addWidget(self.IR_spot_output, 1, 1)
+
+        output_layout.addWidget(QLabel("红外焦点深度 (mm):"), 1, 2)
+        self.IR_depth_output = QLineEdit()
+        self.IR_depth_output.setReadOnly(True)
+        output_layout.addWidget(self.IR_depth_output, 1, 3)
+
+        output_layout.addWidget(QLabel("红外光斑直径 (mm):"), 1, 4)
+        self.IR_diameter_output = QLineEdit()
+        self.IR_diameter_output.setReadOnly(True)
+        output_layout.addWidget(self.IR_diameter_output, 1, 5)     
+
+        output_layout.addWidget(QLabel("SFG光斑直径 (mm):"), 2, 0)
+        self.SFG_diameter_output = QLineEdit()
+        self.SFG_diameter_output.setReadOnly(True)
+        output_layout.addWidget(self.SFG_diameter_output, 2, 1)    
+
+        output_layout.addWidget(QLabel("狭缝光斑大小 (mm):"), 2, 2)
+        self.Slit_spot_output = QLineEdit()
+        self.Slit_spot_output.setReadOnly(True)
+        output_layout.addWidget(self.Slit_spot_output, 2, 3)
         
         output_group.setLayout(output_layout)
         main_layout.addWidget(output_group)
