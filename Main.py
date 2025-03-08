@@ -33,6 +33,7 @@ class SFGCalculator(QMainWindow):
         
         # Initialize with default values
         self.update_sfg_results()
+        self.calculate_focus()
         
     def calculate_sfg_angle(self):
         """计算SFG反射角度"""
@@ -200,31 +201,62 @@ class SFGCalculator(QMainWindow):
             self.ir_wavelength_output.clear()
         
     def calculate_focus(self):
-        """计算光束直径和瑞利长度"""
+        """计算可见光和红外光的焦点直径"""
         try:
-            # 获取输入值
-            wavelength = float(self.laser_wavelength_input.text())  # nm
-            focal_length = float(self.lens_focal_input.text())  # mm
+            # 获取输入值并转换为浮点数
+            vis_wavelength = float(self.Visible_wavelength_input.text())  # 可见波长 nm
+            ir_wavelength = float(self.IR_wavelength_input.text())  # 红外波长 nm
+            vis_spot_size = float(self.visible_size_input.text())  # 可见光斑直径 mm
+            ir_spot_size = float(self.IR_size_input.text())  # 红外光斑直径 mm
+            vis_focal = float(self.Visible_focal_input.text())  # 可见透镜焦距 mm
+            ir_focal = float(self.IR_focal_input.text())  # 红外透镜焦距 mm
+
+            # 计算可见光焦点直径 (μm)
+            vis_focus_diameter = (4 * vis_focal * vis_wavelength * 1e-3) / (math.pi * vis_spot_size)
             
-            # 假设光束质量因子M²=1，初始光束直径1mm
-            M2 = 1.0
-            initial_beam_diameter = 1.0  # mm
+            # 计算红外光焦点直径 (μm)
+            ir_focus_diameter = (4 * ir_focal * ir_wavelength * 1e-3) / (math.pi * ir_spot_size)
+
+            # 计算可见光焦点深度 (mm)
+            vis_focus_depth = (2 * math.pi * (vis_focus_diameter * 1e-3 / 2)**2) / (vis_wavelength * 1e-6)
             
-            # 计算光束直径
-            beam_diameter = (4 * M2 * wavelength * 1e-6 * focal_length) / \
-                           (math.pi * initial_beam_diameter)
+            # 计算红外光焦点深度 (mm)
+            ir_focus_depth = (2 * math.pi * (ir_focus_diameter * 1e-3 / 2)**2) / (ir_wavelength * 1e-6)
+
+            # 计算可见光斑直径 (μm)
+            vis_defocus = float(self.Visible_defocus_input.text())
+            vis_spot_diameter = vis_focus_diameter * math.sqrt(1 + (vis_defocus / (vis_focus_depth / 2))**2)
             
-            # 计算瑞利长度
-            rayleigh_length = (math.pi * (beam_diameter/2)**2) / (wavelength * 1e-6)
-            
+            # 计算红外光斑直径 (μm)
+            ir_defocus = float(self.IR_defocus_input.text())
+            ir_spot_diameter = ir_focus_diameter * math.sqrt(1 + (ir_defocus / (ir_focus_depth / 2))**2)
+
+            # 计算SFG光斑直径 (mm)
+            sfg_focal = float(self.SFG_focal_input.text())
+            sfg_spot_diameter = vis_spot_size * (sfg_focal / vis_focal)
+
+            # 计算狭缝焦点大小 (μm)
+            spectrometer_focal = float(self.Spectrometer_focal_input.text())
+            sfg_wavelength = float(self.SFG_wavelength_input.text())
+            slit_spot_size = (4 * spectrometer_focal * sfg_wavelength) / (math.pi * sfg_spot_diameter) * 1e-3
+
             # 更新输出框
-            self.beam_diameter_output.setText(f"{beam_diameter:.2f}")
-            self.rayleigh_length_output.setText(f"{rayleigh_length:.2f}")
-            
+            self.Visible_spot_output.setText(f"{vis_focus_diameter:.4f}")
+            self.IR_spot_output.setText(f"{ir_focus_diameter:.4f}")
+            self.Visible_depth_output.setText(f"{vis_focus_depth:.4f}")
+            self.IR_depth_output.setText(f"{ir_focus_depth:.4f}")
+            self.Visible_diameter_output.setText(f"{vis_spot_diameter:.4f}")
+            self.IR_diameter_output.setText(f"{ir_spot_diameter:.4f}")
+            self.SFG_diameter_output.setText(f"{sfg_spot_diameter:.4f}")
+            self.Slit_spot_output.setText(f"{slit_spot_size:.4f}")
+
         except ValueError:
             # 输入无效时清空输出
-            self.beam_diameter_output.clear()
-            self.rayleigh_length_output.clear()
+            self.Visible_spot_output.clear()
+            self.IR_spot_output.clear()
+            self.Visible_diameter_output.clear()
+            self.IR_diameter_output.clear()
+            self.SFG_diameter_output.clear()
 
     def setup_focus_tab(self):
         """设置聚焦计算选项卡"""
@@ -291,7 +323,7 @@ class SFGCalculator(QMainWindow):
 
         input_layout.addWidget(QLabel("红外焦点距离 (mm):"), 3, 2)
         self.IR_defocus_input = QLineEdit()
-        self.IR_defocus_input.setText("15")
+        self.IR_defocus_input.setText("7")
         self.IR_defocus_input.textChanged.connect(self.calculate_focus)
         input_layout.addWidget(self.IR_defocus_input, 3, 3)
 
@@ -331,7 +363,7 @@ class SFGCalculator(QMainWindow):
         output_layout = QGridLayout()
         
         # 添加输出控件
-        output_layout.addWidget(QLabel("可见焦点直径 (mm):"), 0, 0)
+        output_layout.addWidget(QLabel("可见焦点直径 (μm):"), 0, 0)
         self.Visible_spot_output = QLineEdit()
         self.Visible_spot_output.setReadOnly(True)
         output_layout.addWidget(self.Visible_spot_output, 0, 1)
@@ -341,12 +373,12 @@ class SFGCalculator(QMainWindow):
         self.Visible_depth_output.setReadOnly(True)
         output_layout.addWidget(self.Visible_depth_output, 0, 3) 
 
-        output_layout.addWidget(QLabel("可见光斑直径 (mm):"), 0, 4)
+        output_layout.addWidget(QLabel("可见光斑直径 (μm):"), 0, 4)
         self.Visible_diameter_output = QLineEdit()
         self.Visible_diameter_output.setReadOnly(True)
         output_layout.addWidget(self.Visible_diameter_output, 0, 5)
 
-        output_layout.addWidget(QLabel("红外焦点直径 (mm):"), 1, 0)
+        output_layout.addWidget(QLabel("红外焦点直径 (μm):"), 1, 0)
         self.IR_spot_output = QLineEdit()
         self.IR_spot_output.setReadOnly(True)
         output_layout.addWidget(self.IR_spot_output, 1, 1)
@@ -356,7 +388,7 @@ class SFGCalculator(QMainWindow):
         self.IR_depth_output.setReadOnly(True)
         output_layout.addWidget(self.IR_depth_output, 1, 3)
 
-        output_layout.addWidget(QLabel("红外光斑直径 (mm):"), 1, 4)
+        output_layout.addWidget(QLabel("红外光斑直径 (μm):"), 1, 4)
         self.IR_diameter_output = QLineEdit()
         self.IR_diameter_output.setReadOnly(True)
         output_layout.addWidget(self.IR_diameter_output, 1, 5)     
@@ -366,7 +398,7 @@ class SFGCalculator(QMainWindow):
         self.SFG_diameter_output.setReadOnly(True)
         output_layout.addWidget(self.SFG_diameter_output, 2, 1)    
 
-        output_layout.addWidget(QLabel("狭缝光斑大小 (mm):"), 2, 2)
+        output_layout.addWidget(QLabel("狭缝焦点大小 (μm):"), 2, 2)
         self.Slit_spot_output = QLineEdit()
         self.Slit_spot_output.setReadOnly(True)
         output_layout.addWidget(self.Slit_spot_output, 2, 3)
