@@ -34,17 +34,7 @@ class SFGCalculator(QMainWindow):
         # Initialize with default values
         self.update_sfg_results()
         self.calculate_focus()
-        
-    def calculate_sfg_angle(self):
-        """计算SFG反射角度"""
-        # TODO: 实现具体计算逻辑
-        pass
-        
-    def calculate_sfg_wavelength(self):
-        """计算SFG波长"""
-        # TODO: 实现具体计算逻辑
-        pass
-        
+
     def calculate_refraction_angle(self, incident_angle, n1, n2):
         """计算折射角度"""
         return math.degrees(math.asin(n1 * math.sin(math.radians(incident_angle)) / n2))
@@ -285,13 +275,13 @@ class SFGCalculator(QMainWindow):
         self.SFG_wavelength_input.textChanged.connect(self.calculate_focus)
         input_layout.addWidget(self.SFG_wavelength_input, 0, 5)
 
-        input_layout.addWidget(QLabel("可见光斑直径 (mm):"), 1, 0)
+        input_layout.addWidget(QLabel("可见光束直径 (mm):"), 1, 0)
         self.visible_size_input = QLineEdit()
         self.visible_size_input.setText("5")
         self.visible_size_input.textChanged.connect(self.calculate_focus)
         input_layout.addWidget(self.visible_size_input, 1, 1)
 
-        input_layout.addWidget(QLabel("红外光斑直径 (mm):"), 1, 2)
+        input_layout.addWidget(QLabel("红外光束直径 (mm):"), 1, 2)
         self.IR_size_input = QLineEdit()
         self.IR_size_input.setText("5")
         self.IR_size_input.textChanged.connect(self.calculate_focus)
@@ -424,31 +414,7 @@ class SFGCalculator(QMainWindow):
 
     def calculate_intensity(self):
         """计算信号强度、噪声水平和信噪比"""
-        try:
-            # 获取输入值
-            power = float(self.laser_power_input.text())
-            gain = float(self.detector_gain_input.text())
-            time = float(self.integration_time_input.text())
-            
-            # 计算信号强度
-            signal = power * gain * time
-            
-            # 计算噪声水平（假设与信号强度的平方根成正比）
-            noise = math.sqrt(signal)
-            
-            # 计算信噪比
-            snr = 10 * math.log10(signal / noise) if noise > 0 else 0
-            
-            # 更新输出框
-            self.signal_intensity_output.setText(f"{signal:.2f}")
-            self.noise_level_output.setText(f"{noise:.2f}")
-            self.snr_output.setText(f"{snr:.2f}")
-            
-        except ValueError:
-            # 输入无效时清空输出
-            self.signal_intensity_output.clear()
-            self.noise_level_output.clear()
-            self.snr_output.clear()
+
 
     def setup_intensity_tab(self):
         """设置强度与信噪比计算选项卡"""
@@ -459,23 +425,77 @@ class SFGCalculator(QMainWindow):
         input_layout = QGridLayout()
         
         # 添加输入控件
-        input_layout.addWidget(QLabel("激光功率 (mW):"), 0, 0)
-        self.laser_power_input = QLineEdit()
-        self.laser_power_input.setText("100")
-        self.laser_power_input.textChanged.connect(self.calculate_intensity)
-        input_layout.addWidget(self.laser_power_input, 0, 1)
-        
-        input_layout.addWidget(QLabel("探测器增益:"), 1, 0)
-        self.detector_gain_input = QLineEdit()
-        self.detector_gain_input.setText("1.0")
-        self.detector_gain_input.textChanged.connect(self.calculate_intensity)
-        input_layout.addWidget(self.detector_gain_input, 1, 1)
-        
-        input_layout.addWidget(QLabel("积分时间 (s):"), 2, 0)
+        input_layout.addWidget(QLabel("可见光单脉冲能量 (uJ/pulse):"), 0, 0)
+        self.Visible_pulseenergy_input = QLineEdit()
+        self.Visible_pulseenergy_input.setText("400")
+        self.Visible_pulseenergy_input.textChanged.connect(self.calculate_intensity)
+        input_layout.addWidget(self.Visible_pulseenergy_input, 0, 1)
+
+        input_layout.addWidget(QLabel("可见光脉冲宽度 (ps):"), 0, 2)
+        self.Visible_pulsewidth_input = QLineEdit()
+        self.Visible_pulsewidth_input.setText("80")
+        self.Visible_pulsewidth_input.textChanged.connect(self.calculate_intensity)
+        input_layout.addWidget(self.Visible_pulsewidth_input, 0, 3)
+
+        input_layout.addWidget(QLabel("红外光单脉冲能量 (uJ/pulse):"), 1, 0)
+        self.IR_pulseenergy_input = QLineEdit()
+        self.IR_pulseenergy_input.setText("20")
+        self.IR_pulseenergy_input.textChanged.connect(self.calculate_intensity)
+        input_layout.addWidget(self.IR_pulseenergy_input, 1, 1)
+
+        input_layout.addWidget(QLabel("红外光脉冲宽度 (ps):"), 1, 2)
+        self.IR_pulsewidth_input = QLineEdit()
+        self.IR_pulsewidth_input.setText("0.05")
+        self.IR_pulsewidth_input.textChanged.connect(self.calculate_intensity)
+        input_layout.addWidget(self.IR_pulsewidth_input, 1, 3)
+
+        input_layout.addWidget(QLabel("CCD暗电流 (e-/pixel/s):"), 2, 0)
+        self.CCD_darknoise_input = QLineEdit()
+        self.CCD_darknoise_input.setText("2.8e-5")
+        self.CCD_darknoise_input.textChanged.connect(self.calculate_intensity)
+        input_layout.addWidget(self.CCD_darknoise_input, 2, 1)
+
+        input_layout.addWidget(QLabel("CCD读出噪声 (e-):"), 2, 2)
+        self.CCD_readoutnoise_input = QLineEdit()
+        self.CCD_readoutnoise_input.setText("3.5")
+        self.CCD_readoutnoise_input.textChanged.connect(self.calculate_intensity)
+        input_layout.addWidget(self.CCD_readoutnoise_input, 2, 3)
+
+        input_layout.addWidget(QLabel("CCD量子效率(%):"), 3, 0)
+        self.CCD_QE_input = QLineEdit()
+        self.CCD_QE_input.setText("98")
+        self.CCD_QE_input.textChanged.connect(self.calculate_intensity)
+        input_layout.addWidget(self.CCD_QE_input, 3, 1)
+
+        input_layout.addWidget(QLabel("CCD Binned 宽度 (pixel):"), 3, 2)
+        self.CCD_binned_input = QLineEdit()
+        self.CCD_binned_input.setText("20")
+        self.CCD_binned_input.textChanged.connect(self.calculate_intensity)
+        input_layout.addWidget(self.CCD_binned_input, 3, 3)
+
+        input_layout.addWidget(QLabel("对石英归一化强度:"), 4, 0)
+        self.Normalized_intensity_input = QLineEdit()
+        self.Normalized_intensity_input.setText("0.1")
+        self.Normalized_intensity_input.textChanged.connect(self.calculate_intensity)
+        input_layout.addWidget(self.Normalized_intensity_input, 4, 1)
+
+        input_layout.addWidget(QLabel("石英二阶极化率 (mks):"), 4, 2)
+        self.quartz_chi2_input = QLineEdit()
+        self.quartz_chi2_input.setText("1.164e-20")
+        self.quartz_chi2_input.textChanged.connect(self.calculate_intensity)
+        input_layout.addWidget(self.quartz_chi2_input, 4, 3)
+
+        input_layout.addWidget(QLabel("积分时间 (s):"), 5, 0)
         self.integration_time_input = QLineEdit()
-        self.integration_time_input.setText("1.0")
+        self.integration_time_input.setText("120")
         self.integration_time_input.textChanged.connect(self.calculate_intensity)
-        input_layout.addWidget(self.integration_time_input, 2, 1)
+        input_layout.addWidget(self.integration_time_input, 5, 1)
+
+        input_layout.addWidget(QLabel("激光器重复频率 (/s):"), 5, 2)
+        self.laser_repeat_input = QLineEdit()
+        self.laser_repeat_input.setText("1000")
+        self.laser_repeat_input.textChanged.connect(self.calculate_intensity)
+        input_layout.addWidget(self.laser_repeat_input, 5, 3)
         
         input_group.setLayout(input_layout)
         
@@ -507,20 +527,45 @@ class SFGCalculator(QMainWindow):
         output_layout = QGridLayout()
         
         # 添加输出控件
-        output_layout.addWidget(QLabel("信号强度 (a.u.):"), 0, 0)
-        self.signal_intensity_output = QLineEdit()
-        self.signal_intensity_output.setReadOnly(True)
-        output_layout.addWidget(self.signal_intensity_output, 0, 1)
+        output_layout.addWidget(QLabel("I_visible (W/cm^2):"), 0, 0)
+        self.I_visible_output = QLineEdit()
+        self.I_visible_output.setReadOnly(True)
+        output_layout.addWidget(self.I_visible_output, 0, 1)
+
+        output_layout.addWidget(QLabel("I_IR (W/cm^2):"), 0, 2)
+        self.I_IR_output = QLineEdit()
+        self.I_IR_output.setReadOnly(True)
+        output_layout.addWidget(self.I_IR_output, 0, 3)
+
+        output_layout.addWidget(QLabel("I_SFG (W/cm^2):"), 1, 0)
+        self.I_SFG_output = QLineEdit()
+        self.I_SFG_output.setReadOnly(True)
+        output_layout.addWidget(self.I_SFG_output, 1, 1)
+
+        output_layout.addWidget(QLabel("SFG光子数 (photon/pulse):"), 1, 2)
+        self.SFG_pulsephoton_output = QLineEdit()
+        self.SFG_pulsephoton_output.setReadOnly(True)
+        output_layout.addWidget(self.SFG_pulsephoton_output, 1, 3)
+
+        output_layout.addWidget(QLabel("SFG每秒信号 (counts/s):"), 1, 4)
+        self.SFG_count_output = QLineEdit()
+        self.SFG_count_output.setReadOnly(True)
+        output_layout.addWidget(self.SFG_count_output, 1, 5)
+
+        output_layout.addWidget(QLabel("SFG信号大小 (counts):"), 2, 0)
+        self.SFG_totalcount_output = QLineEdit()
+        self.SFG_totalcount_output.setReadOnly(True)
+        output_layout.addWidget(self.SFG_totalcount_output, 2, 1)
         
-        output_layout.addWidget(QLabel("噪声水平 (a.u.):"), 1, 0)
+        output_layout.addWidget(QLabel("总噪声:"), 2, 2)
         self.noise_level_output = QLineEdit()
         self.noise_level_output.setReadOnly(True)
-        output_layout.addWidget(self.noise_level_output, 1, 1)
+        output_layout.addWidget(self.noise_level_output, 2, 3)
         
-        output_layout.addWidget(QLabel("信噪比 (dB):"), 2, 0)
+        output_layout.addWidget(QLabel("信噪比 (SNR):"), 3, 0)
         self.snr_output = QLineEdit()
         self.snr_output.setReadOnly(True)
-        output_layout.addWidget(self.snr_output, 2, 1)
+        output_layout.addWidget(self.snr_output, 3, 1)
         
         output_group.setLayout(output_layout)
         main_layout.addWidget(output_group)
