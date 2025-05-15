@@ -162,7 +162,7 @@ class SFGCalculator(QMainWindow):
             ir_term = math.sqrt(n_quartz_ir**2 - math.sin(ir_angle_rad)**2) / ir_wavelength
             
             # 使用用户提供的新公式计算相干长度，单位为nm
-            coherence_length = 1 / (2 * math.pi * (sfg_term + vis_term) + ir_term)
+            coherence_length = 1 / (2 * math.pi * (sfg_term + vis_term + ir_term))
             self.coherence_length_output.setText(f"{coherence_length:.2f}")
             
             # 计算并更新菲涅耳因子
@@ -558,7 +558,7 @@ class SFGCalculator(QMainWindow):
             vis_term_fresnel = math.sqrt(n_vis**2 - math.sin(vis_angle_rad_fresnel)**2) / vis_wavelength
             ir_term_fresnel = math.sqrt(n_ir**2 - math.sin(ir_angle_rad_fresnel)**2) / ir_wavelength_fresnel
             
-            coherence_length_fresnel = 1 / (2 * math.pi * (sfg_term_fresnel + vis_term_fresnel) + ir_term_fresnel)
+            coherence_length_fresnel = 1 / (2 * math.pi * (sfg_term_fresnel + vis_term_fresnel + ir_term_fresnel))
             self.fresnel_coherence_length_output.setText(f"{coherence_length_fresnel:.2f}")
             
             # 计算波长
